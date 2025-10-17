@@ -32,14 +32,17 @@ namespace ConsoleApp
 			Task task2 = Task.Run(() => SetupTeam2());
 			Task.WaitAll(task1, task2);
 
+			_mutex.WaitOne();
+
 			while (_robots.TryDequeue(out robot))
 			{
 				Console.ForegroundColor = robot.TeamColor;
 				Console.WriteLine($"{robot.Id}: Team: {robot.Team}, {robot.Name}");
 			}
 				
-		
-			Console.ResetColor();
+			_mutex.ReleaseMutex();
+
+            Console.ResetColor();
 			Console.WriteLine("-----------------------------");
 		}
 
@@ -49,14 +52,13 @@ namespace ConsoleApp
 
 		private static void MakeRobot(string teamName, ConsoleColor teamColor)
 		{
-
-		
-			Thread.Sleep(20);
-			_idCounter += 1;
-			var robot = new Robot { Id = _idCounter, Name = $"Robot {_idCounter}", Team = teamName, TeamColor = teamColor };
-			_robots.Enqueue(robot);
-
-		
+			lock (_lock) 
+			{
+				Thread.Sleep(20);
+				_idCounter += 1;
+				var robot = new Robot { Id = _idCounter, Name = $"Robot {_idCounter}", Team = teamName, TeamColor = teamColor };
+				_robots.Enqueue(robot);
+			}
 		}
 
 		private static void SetupTeam1()
